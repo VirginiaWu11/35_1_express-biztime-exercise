@@ -2,6 +2,7 @@ const express = require("express");
 const ExpressError = require("../expressError");
 const router = express.Router();
 const db = require("../db");
+const { throwErrorIfEmpty } = require("../helpers");
 
 module.exports = router;
 
@@ -25,12 +26,7 @@ router.get("/:code", async (req, res, next) => {
             "SELECT * FROM invoices WHERE comp_code = $1",
             [code]
         );
-        if (results.rows.length === 0) {
-            throw new ExpressError(
-                `Can't find company with code of ${code}`,
-                404
-            );
-        }
+        throwErrorIfEmpty(results.rows.length, code);
         results.rows[0]["invoices"] = invoices.rows;
         return res.json({ companies: results.rows });
     } catch (e) {
@@ -59,12 +55,8 @@ router.put("/:code", async (req, res, next) => {
             `UPDATE companies SET name=$1, description=$2 WHERE code=$3 RETURNING code, name, description`,
             [name, description, code]
         );
-        if (results.rows.length === 0) {
-            throw new ExpressError(
-                `Can't find company with code of ${code}`,
-                404
-            );
-        }
+        throwErrorIfEmpty(results.rows.length, code);
+
         return res.status(201).json({ companies: results.rows[0] });
     } catch (e) {
         next(e);
@@ -79,12 +71,8 @@ router.delete("/:code", async (req, res, next) => {
             [code]
         );
         console.log(results);
-        if (results.rows.length === 0) {
-            throw new ExpressError(
-                `Can't find company with code of ${code}`,
-                404
-            );
-        }
+        throwErrorIfEmpty(results.rows.length, code);
+
         return res.send({ msg: "Deleted" });
     } catch (e) {
         next(e);
