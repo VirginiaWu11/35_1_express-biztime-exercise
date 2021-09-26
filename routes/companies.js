@@ -65,3 +65,23 @@ router.put("/:code", async (req, res, next) => {
         next(e);
     }
 });
+
+router.delete("/:code", async (req, res, next) => {
+    try {
+        const { code } = req.params;
+        const results = await db.query(
+            "DELETE FROM companies WHERE code=$1 RETURNING code, name, description",
+            [code]
+        );
+        console.log(results);
+        if (results.rows.length === 0) {
+            throw new ExpressError(
+                `Can't find company with code of ${code}`,
+                404
+            );
+        }
+        return res.send({ msg: "Deleted" });
+    } catch (e) {
+        next(e);
+    }
+});
