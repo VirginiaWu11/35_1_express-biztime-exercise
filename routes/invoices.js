@@ -2,6 +2,7 @@ const express = require("express");
 const ExpressError = require("../expressError");
 const router = express.Router();
 const db = require("../db");
+const { throwErrorIfEmpty } = require("../helpers");
 
 module.exports = router;
 
@@ -20,9 +21,8 @@ router.get("/:id", async (req, res, next) => {
         const results = await db.query(`SELECT * FROM invoices WHERE id = $1`, [
             id,
         ]);
-        if (results.rows.length === 0) {
-            throw new ExpressError(`Can't find invoice with id of ${id}`, 404);
-        }
+        throwErrorIfEmpty(results.rows.length, id);
+
         return res.json({ invoices: results.rows });
     } catch (e) {
         next(e);
@@ -50,9 +50,8 @@ router.put("/:id", async (req, res, next) => {
             `UPDATE invoices SET amt=$1 WHERE id=$2 RETURNING id, comp_code, amt, paid, add_date, paid_date`,
             [amt, id]
         );
-        if (results.rows.length === 0) {
-            throw new ExpressError(`Can't find invoice with id of ${id}`, 404);
-        }
+        throwErrorIfEmpty(results.rows.length, id);
+
         return res.status(201).json({ invoices: results.rows[0] });
     } catch (e) {
         next(e);
@@ -67,9 +66,8 @@ router.delete("/:id", async (req, res, next) => {
             [id]
         );
         console.log(results);
-        if (results.rows.length === 0) {
-            throw new ExpressError(`Can't find invoice with id of ${id}`, 404);
-        }
+        throwErrorIfEmpty(results.rows.length, id);
+
         return res.send({ msg: "Deleted" });
     } catch (e) {
         next(e);
